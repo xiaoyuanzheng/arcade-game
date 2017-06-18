@@ -29,7 +29,23 @@ Enemy.prototype.update = function(dt) {
     this.x = this.x + this.speed*dt;
     this.x = this.x > (ctx.width + this.width) ? 0 : this.x;
     this.render();
+    this.checkCollision();
 };
+
+//检查敌人与玩家是否发生碰撞了
+Enemy.prototype.checkCollision = function(){
+    var enemyCenterX = this.x + 101/2;
+    var enemyCenterY = this.y + 83/2;
+
+    var playerCenterX = player.x + 101/2;
+    var palyerCenterY = player.y + 83/2;
+
+    if((Math.abs(enemyCenterX - playerCenterX)<101/2) && Math.abs(enemyCenterY- palyerCenterY)<83/2)
+    {
+        console.log("enemy x:"+this.x+"y:"+this.y+" player x:"+player.x+"y:"+player.y+"相撞了，呜呜呜。。。");
+        player.reset();
+    }
+}
 
 // 此为游戏必须的函数，用来在屏幕上画出敌人，
 Enemy.prototype.render = function() {
@@ -42,13 +58,31 @@ var Player = function()
 {
     this.x = 101 * 2;
     this.y = 83 * 5; 
+    this.speed = GetRandomNum(10,83);
     this.sprite = 'images/char-boy.png';
 }
 
 Player.prototype.update = function()
 {
     if(player_debug)console.log('location of player,x:'+this.x+",y:"+this.y);
-    this.render();
+    if(this.y == 0)////玩家躲过敌人，成功过河
+    {
+        //宣布玩家胜利
+        this.win();
+        //重新置位玩家
+        this.reset();
+    }
+    else
+    {
+        this.render();
+    }
+
+}
+Player.prototype.reset = function()
+{
+    this.x = 101 * 2;
+    this.y = 83 * 5; 
+    this.update();
 }
 
 Player.prototype.render = function()
@@ -61,19 +95,19 @@ Player.prototype.handleInput = function(direction)
     switch(direction)
     {
         case 'left':
-            this.x -= 101;
+            this.x -= this.speed;
             if(player_debug)console.log('x - 101:'+this.x);
             break;
         case 'right':
-            this.x += 101;
+            this.x += this.speed;
             if(player_debug)console.log('x + 101:'+this.x);
             break;
         case 'up':
-            this.y -= 83;
+            this.y -= this.speed;
             if(player_debug)console.log('y - 83:'+this.y);
             break;
         case 'down':
-            this.y += 83;
+            this.y += this.speed;
             if(player_debug)console.log('y + 83:'+this.y);
             break;
     }
@@ -83,6 +117,11 @@ Player.prototype.handleInput = function(direction)
     if(this.y < 0) this.y = 0;
     if(this.y > 5 * 83)this.y = 5 * 83;
     this.update();
+}
+
+Player.prototype.win = function()
+{
+    alert("Congratulation");
 }
 
 
@@ -118,6 +157,5 @@ document.addEventListener('keyup', function(e) {
         40: 'down'
     };
     if(player_debug)console.log('keyup occure,keyCode:'+e.keyCode);
-
     player.handleInput(allowedKeys[e.keyCode]);
 });

@@ -1,5 +1,7 @@
-var enemy_debug = 0;
-var player_debug = 1;
+var enemy_debug = true;
+var player_debug = false;
+var CELL_WIDTH = 101;
+var CELL_HEIGHT = 83;
 function GetRandomNum(Min,Max)
 {   
     var Range = Max - Min;   
@@ -21,26 +23,26 @@ var Enemy = function(x,y) {
 
 // 此为游戏必须的函数，用来更新敌人的位置
 // 参数: dt ，表示时间间隙
-Enemy.prototype.width = 101;
+Enemy.prototype.width = CELL_WIDTH;
 Enemy.prototype.update = function(dt) {
     // 你应该给每一次的移动都乘以 dt 参数，以此来保证游戏在所有的电脑上
     // 都是以同样的速度运行的
     if(enemy_debug)console.log('location of enemy,x:'+this.x+'y:'+this.y);
     this.x = this.x + this.speed*dt;
-    this.x = this.x > (ctx.width + this.width) ? 0 : this.x;
+    this.x = this.x > (ctx.canvas.width + this.width) ? CELL_WIDTH *(-1) : this.x;
     this.render();
     this.checkCollision();
 };
 
 //检查敌人与玩家是否发生碰撞了
 Enemy.prototype.checkCollision = function(){
-    var enemyCenterX = this.x + 101/2;
-    var enemyCenterY = this.y + 83/2;
+    var enemyCenterX = this.x + CELL_WIDTH/2;
+    var enemyCenterY = this.y + CELL_HEIGHT/2;
 
-    var playerCenterX = player.x + 101/2;
-    var palyerCenterY = player.y + 83/2;
+    var playerCenterX = player.x + CELL_WIDTH/2;
+    var palyerCenterY = player.y + CELL_HEIGHT/2;
 
-    if((Math.abs(enemyCenterX - playerCenterX)<101/2) && Math.abs(enemyCenterY- palyerCenterY)<83/2)
+    if((Math.abs(enemyCenterX - playerCenterX)<CELL_WIDTH/2) && Math.abs(enemyCenterY- palyerCenterY)<CELL_HEIGHT/2)
     {
         console.log("enemy x:"+this.x+"y:"+this.y+" player x:"+player.x+"y:"+player.y+"相撞了，呜呜呜。。。");
         player.reset();
@@ -56,12 +58,14 @@ Enemy.prototype.render = function() {
 // 这个类需要一个 update() 函数， render() 函数和一个 handleInput()函数
 var Player = function()
 {
-    this.x = 101 * 2;
-    this.y = 83 * 5; 
+    this.x = this.initPos.x;
+    this.y = this.initPos.y; 
     this.speed = GetRandomNum(10,83);
     this.sprite = 'images/char-boy.png';
 }
 
+Player.prototype.initPos = {x:CELL_WIDTH * 2,y:CELL_HEIGHT * 5};
+Player.prototype.maxPos = {x:CELL_WIDTH * 4,y:CELL_HEIGHT * 5};
 Player.prototype.update = function()
 {
     if(player_debug)console.log('location of player,x:'+this.x+",y:"+this.y);
@@ -76,12 +80,11 @@ Player.prototype.update = function()
     {
         this.render();
     }
-
 }
 Player.prototype.reset = function()
 {
-    this.x = 101 * 2;
-    this.y = 83 * 5; 
+    this.x = this.initPos.x;
+    this.y = this.initPos.y; 
     this.update();
 }
 
@@ -92,30 +95,28 @@ Player.prototype.render = function()
 
 Player.prototype.handleInput = function(direction)
 {
+    if(player_debug)console.log('player direction is:'+direction);
     switch(direction)
     {
         case 'left':
             this.x -= this.speed;
-            if(player_debug)console.log('x - 101:'+this.x);
             break;
         case 'right':
             this.x += this.speed;
-            if(player_debug)console.log('x + 101:'+this.x);
             break;
         case 'up':
             this.y -= this.speed;
-            if(player_debug)console.log('y - 83:'+this.y);
             break;
         case 'down':
             this.y += this.speed;
-            if(player_debug)console.log('y + 83:'+this.y);
             break;
     }
 
     if(this.x < 0) this.x = 0;
-    if(this.x > 4 * 101)this.x = 4 * 101;
+    if(this.x > this.maxPos.x)this.x = this.maxPos.x;
     if(this.y < 0) this.y = 0;
-    if(this.y > 5 * 83)this.y = 5 * 83;
+    if(this.y > this.maxPos.y)this.y = this.maxPos.y;
+    if(player_debug)console.log('player position x: '+this.x+'; y: '+this.y);
     this.update();
 }
 
@@ -129,19 +130,19 @@ Player.prototype.win = function()
 // 把所有敌人的对象都放进一个叫 allEnemies 的数组里面
 // 把玩家对象放进一个叫 player 的变量里面
 window.allEnemies = [];
-for(var index = 0;index < 3; index ++)
+var enemyPathNum = 3;
+for(var row = 0;row < enemyPathNum; row ++)
 {
-    (
-        function(row)
-        {
-            setInterval(function()
-            {
-                var locY = (row + 0.5) * 83;
-                if(enemy_debug)console.log('add a enemy,x:0, y:' + locY);
-                allEnemies.push(new Enemy(-101,locY));
-            },5000);
-        }
-    )(index);
+    //每条过道2个
+    for(var index = 0;index < 2;index ++)
+    {
+        //第row过道上，敌人的y坐标
+        var enemy = new Enemy(0,(row + 0.5) * CELL_HEIGHT);
+         //敌人的x坐标，随机生成，有可能在界面之外
+        enemy.x = enemy.speed * GetRandomNum(0,10) * (-1);
+        allEnemies.push(enemy);
+        if(enemy_debug)console.log('add a enemy,x: '+enemy.x+', y: ' + enemy.y);
+    }
 }
 
 
